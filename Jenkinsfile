@@ -1,8 +1,7 @@
 pipeline {
     environment {
-        dockerImageName = "tannuahuja14/react-app"
-        dockerImageTag = "v2.0" // Specify the desired tag for your Docker image
-        registryCredential = 'dockerhublogin'
+        dockerImageName = "tannuahuja/react-app"
+        dockerImage = ""
     }
 
     agent any
@@ -10,38 +9,34 @@ pipeline {
     stages {
         stage('Checkout Source') {
             steps {
-                git 'https://github.com/tannuahuja14/jenkins-kubernetes.git'
+                git 'https://github.com/tannuahuja14/node-deployment.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image with the specified tag
-                    docker.build("-t ${dockerImageName}:${dockerImageTag} .")
+                    dockerImage = docker.build dockerImageName // Fixed the variable name to dockerImageName
                 }
             }
         }
 
-        stage('Tag and Push Docker Image') {
+        stage('Pushing Image') {
             environment {
                 registryCredential = 'dockerhublogin'
             }
             steps {
                 script {
-                    // Tag the Docker image with the specified tag
-                    docker.image("${dockerImageName}:${dockerImageTag}").push()
-                    
-                    // Optionally, you can tag and push with the 'latest' tag
-                    docker.image("${dockerImageName}:latest").push()
+                    docker.withRegistry('https://registry.hub.docker.com', registryCredential) {
+                        dockerImage.push("latest")
+                    }
                 }
             }
         }
 
-        stage('Deploying to Kubernetes') {
+        stage('Deploying React.js container to Kubernetes') {
             steps {
                 script {
-                    // Deploy the application to Kubernetes using the provided configuration file
                     kubernetesDeploy(configs: 'deploymentservice.yaml', kubeconfigId: 'kubernetes')
                 }
             }
