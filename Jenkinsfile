@@ -1,7 +1,7 @@
 pipeline {
     environment {
         dockerImageName = "tannuahuja14/react-app"
-        dockerImageTag = "v2.0" 
+        dockerImageTag = "v2.0" // Specify the desired tag for your Docker image
         registryCredential = 'dockerhublogin'
     }
 
@@ -18,30 +18,22 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image with the specified tag
-                    docker.build("${dockerImageName}:${dockerImageTag}")
+                    docker.build("-t ${dockerImageName}:${dockerImageTag} .")
                 }
             }
         }
 
-        stage('Tag Docker Image') {
-            steps {
-                script {
-                    // Tag the Docker image with the specified tag
-                    docker.image("${dockerImageName}:${dockerImageTag}").push()
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
+        stage('Tag and Push Docker Image') {
             environment {
                 registryCredential = 'dockerhublogin'
             }
             steps {
                 script {
-                    // Push the Docker image to the registry
-                    docker.withRegistry('https://index.docker.io/v1/', registryCredential) {
-                        docker.image("${dockerImageName}:${dockerImageTag}").push()
-                    }
+                    // Tag the Docker image with the specified tag
+                    docker.image("${dockerImageName}:${dockerImageTag}").push()
+                    
+                    // Optionally, you can tag and push with the 'latest' tag
+                    docker.image("${dockerImageName}:latest").push()
                 }
             }
         }
